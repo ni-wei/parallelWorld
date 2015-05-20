@@ -1,0 +1,52 @@
+Error during helgrind check (return code 1): ==24279== Helgrind, a thread error detector
+==24279== Copyright (C) 2007-2013, and GNU GPL'd, by OpenWorks LLP et al.
+==24279== Using Valgrind-3.10.0.SVN and LibVEX; rerun with -h for copyright info
+==24279== Command: /var/www/Project/assignment_uploads/assignment2/group73//histogram_par war_and_peace.txt 2 1
+==24279== 
+==24279== ---Thread-Announcement------------------------------------------
+==24279== 
+==24279== Thread #3 was created
+==24279==    at 0x564F34E: clone (clone.S:77)
+==24279==    by 0x4E41F6F: do_clone.constprop.4 (createthread.c:75)
+==24279==    by 0x4E4357F: pthread_create@@GLIBC_2.2.5 (createthread.c:256)
+==24279==    by 0x4C30DFF: pthread_create_WRK (hg_intercepts.c:269)
+==24279==    by 0x4C30F81: pthread_create@* (hg_intercepts.c:300)
+==24279==    by 0x40118F: get_histogram (in /var/www/Project/assignment_uploads/assignment2/group73/histogram_par)
+==24279==    by 0x400CA3: main (in /var/www/Project/assignment_uploads/assignment2/group73/histogram_par)
+==24279== 
+==24279== ---Thread-Announcement------------------------------------------
+==24279== 
+==24279== Thread #2 was created
+==24279==    at 0x564F34E: clone (clone.S:77)
+==24279==    by 0x4E41F6F: do_clone.constprop.4 (createthread.c:75)
+==24279==    by 0x4E4357F: pthread_create@@GLIBC_2.2.5 (createthread.c:256)
+==24279==    by 0x4C30DFF: pthread_create_WRK (hg_intercepts.c:269)
+==24279==    by 0x4C30F81: pthread_create@* (hg_intercepts.c:300)
+==24279==    by 0x40118F: get_histogram (in /var/www/Project/assignment_uploads/assignment2/group73/histogram_par)
+==24279==    by 0x400CA3: main (in /var/www/Project/assignment_uploads/assignment2/group73/histogram_par)
+==24279== 
+==24279== ----------------------------------------------------------------
+==24279== 
+==24279== Lock at 0x601940 was first observed
+==24279==    at 0x4C310A1: pthread_mutex_init (hg_intercepts.c:443)
+==24279==    by 0x40112A: get_histogram (in /var/www/Project/assignment_uploads/assignment2/group73/histogram_par)
+==24279==    by 0x400CA3: main (in /var/www/Project/assignment_uploads/assignment2/group73/histogram_par)
+==24279== 
+==24279== Possible data race during read of size 4 at 0x601920 by thread #3
+==24279== Locks held: none
+==24279==    at 0x401040: local_histo (in /var/www/Project/assignment_uploads/assignment2/group73/histogram_par)
+==24279==    by 0x4C30F6A: mythread_wrapper (hg_intercepts.c:233)
+==24279==    by 0x4E42E99: start_thread (pthread_create.c:308)
+==24279== 
+==24279== This conflicts with a previous write of size 4 by thread #2
+==24279== Locks held: 1, at address 0x601940
+==24279==    at 0x40106C: local_histo (in /var/www/Project/assignment_uploads/assignment2/group73/histogram_par)
+==24279==    by 0x4C30F6A: mythread_wrapper (hg_intercepts.c:233)
+==24279==    by 0x4E42E99: start_thread (pthread_create.c:308)
+==24279==  Address 0x601920 is 0 bytes inside data symbol "counter"
+==24279== 
+==24279== 
+==24279== For counts of detected and suppressed errors, rerun with: -v
+==24279== Use --history-level=approx or =none to gain increased speed, at
+==24279== the cost of reduced accuracy of conflicting-access information
+==24279== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 1 from 1)
