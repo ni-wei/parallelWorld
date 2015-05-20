@@ -1,0 +1,16 @@
+#object files:
+*.o
+
+# .d files:
+*.d
+
+#exec.
+*.out
+
+#latex stuff
+*.aux
+*.log
+/results/*.aux
+/results/*.log
+
+
