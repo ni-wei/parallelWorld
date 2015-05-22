@@ -7,6 +7,9 @@
 #exec.
 *.out
 
+# unit_test exe
+unit_test
+
 #latex stuff
 *.aux
 *.log
