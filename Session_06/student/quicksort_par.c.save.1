@@ -52,13 +52,13 @@ void task_parallel_qs(int *a, int left, int right, int num_threads)
 //#pragma omp taskwait
 //}
 //		}
-	} //end of the if loop
-} //end of task_parallel_qs(a,left,right,num_threads)
+	}
+}
 
 void quicksort(int *a, int left, int right, int num_threads)
 {
 	omp_set_nested(1); //nested
-	omp_set_dynamic(1);//to improve speedup
+	omp_set_dynamic(1);
 	omp_set_num_threads(num_threads);
 	omp_set_max_active_levels(MAX_ACTIVE_LVL_OMP);
 	#pragma omp parallel

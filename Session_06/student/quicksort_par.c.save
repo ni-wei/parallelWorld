@@ -3,7 +3,7 @@
 #include "quicksort.h"
 #include "helper.h"
 
-#define MAX_ACTIVE_LVL_OMP 6
+#define MAX_ACTIVE_LVL_OMP 3
 
 //void quicksort(int *a, int left, int right, int num_threads)
 void task_parallel_qs(int *a, int left, int right, int num_threads)
@@ -34,36 +34,30 @@ void task_parallel_qs(int *a, int left, int right, int num_threads)
 
 //		omp_set_max_active_levels(8);
 
-/*		if(omp_get_active_level() == MAX_ACTIVE_LVL_OMP) {
+		if(omp_get_active_level() == MAX_ACTIVE_LVL_OMP) {
 			task_parallel_qs(a, left, swapIdx - 1, num_threads);
 			task_parallel_qs(a, swapIdx + 1, right, num_threads);
 		}
 		else {
 #pragma omp parallel
 {
-#pragma omp single //nowait
-{*/
-#pragma omp task //if(omp_get_active_level() == MAX_ACTIVE_LVL_OMP)
+#pragma omp single
+{
+#pragma omp task
 	  task_parallel_qs(a, left, swapIdx - 1, num_threads);
-#pragma omp task //if(omp_get_active_level() == MAX_ACTIVE_LVL_OMP)
+#pragma omp task
 	  task_parallel_qs(a, swapIdx + 1, right, num_threads);
+}
 //#pragma omp taskwait
-//}
-//#pragma omp taskwait
-//}
-//		}
-	} //end of the if loop
-} //end of task_parallel_qs(a,left,right,num_threads)
+}
+		}
+	}
+}
 
 void quicksort(int *a, int left, int right, int num_threads)
 {
-	omp_set_nested(1); //nested
-	omp_set_dynamic(1);//to improve speedup
+	omp_set_nested(0); //nested
 	omp_set_num_threads(num_threads);
 	omp_set_max_active_levels(MAX_ACTIVE_LVL_OMP);
-	#pragma omp parallel
-	{
-		#pragma omp single //nowait
-		task_parallel_qs(a,left,right,num_threads);
-	}
+	task_parallel_qs(a,left,right,num_threads);
 }
