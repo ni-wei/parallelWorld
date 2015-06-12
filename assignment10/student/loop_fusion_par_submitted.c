@@ -11,7 +11,6 @@ void compute(unsigned long **a, unsigned long **b, unsigned long **c, unsigned l
 			d[i][j] = a[i][j] * c[i][j];
 			c[i][j] = a[i][j] - a[i][j + 2];
 		}
-		c[i][0] = a[i][0] - a[i][2];
 	}
 /*
 	for (int j = 1; j < N; j++) {
