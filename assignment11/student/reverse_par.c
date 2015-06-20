@@ -23,17 +23,22 @@ void reverse(char *str, int strlen)
 
 	int *sendcounts;    //how many elements to send to each process
 	int *displs;        //the displacements where each segment begins
+	int *recvcounts;    //how many elements to recv to each process
+	int *displr;        //the displacements where each segment begins
 
     MPI_Comm_size(MPI_COMM_WORLD, &np);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	int rem = strlen % np; // elements remaining after division among processes
-	int sum = 0;                // Sum of counts. Used to calculate displacements
-	char rec_buf[100];          // buffer where the received data should be stored
-//	char *rec_buf;          // buffer where the received data should be stored
+	int rem = strlen % np;	// elements remaining after division among processes
+	int sum = 0;		// Sum of send counts. Used to calculate send displacements
+	int recv_sum = 0;	// Sum of recv counts. Used to calculate displacements
+	char rec_buf[100];	// buffer where the received data should be stored
+//	char *rec_buf;		// buffer where the received data should be stored
 
 	sendcounts = malloc(np * sizeof(int)); // or calloc?
 	displs = malloc(np * sizeof(int));
+	recvcounts = malloc(np * sizeof(int));
+	displr = malloc(np * sizeof(int));
 	// calculate send counts and displacements
 	for (int i = 0; i < np; i++) {
 		sendcounts[i] = strlen / np;
@@ -45,7 +50,11 @@ void reverse(char *str, int strlen)
 		displs[i] = sum;
 		sum += sendcounts[i];
 	}
-
+	for (int i = 0; i < np; i++) {
+		recvcounts[i] = sendcounts[np-1 - i];
+		displr[np-1 - i] = recv_sum;
+		recv_sum += recvcounts[i];
+	}
 //	rec_buf = malloc(sendcounts[rank] * sizeof(char));
 
 	// print calculated send counts and displacements for each process
@@ -53,11 +62,16 @@ void reverse(char *str, int strlen)
 		for (int i = 0; i < np; i++) {
 			printf("sendcounts[%d] = %d\tdispls[%d] = %d\n", i, sendcounts[i], i, displs[i]);
 		}
+		for (int i = 0; i < np; i++) {
+			printf("recvcounts[%d] = %d\tdisplr[%d] = %d\n", i, recvcounts[i], i, displr[i]);
+		}
 	}
 
-		MPI_Scatterv(str, sendcounts, displs, MPI_CHAR, &rec_buf, 100, MPI_CHAR, 0, MPI_COMM_WORLD);
+	MPI_Scatterv(str, sendcounts, displs, MPI_CHAR, &rec_buf, sendcounts[rank], MPI_CHAR, 0, MPI_COMM_WORLD);
+//	MPI_Scatterv(str, recvcounts, displr, MPI_CHAR, &rec_buf, recvcounts[rank], MPI_CHAR, 0, MPI_COMM_WORLD);
 
     // print what each process received
+/*
     printf("%d: ", rank);
     for (int i = 0; i < sendcounts[rank]; i++) {
         printf("%c...", rec_buf[i]);
@@ -68,10 +82,24 @@ void reverse(char *str, int strlen)
     {
     	reverse_str(str, strlen);
     }
-
+*/
 	//reverse_str(&rec_buf, sendcounts[rank]);
+	reverse_str(&rec_buf[0], sendcounts[rank]);
 
+	MPI_Gatherv(&rec_buf, sendcounts[rank], MPI_CHAR, str, sendcounts, displr, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+/*	if (0 == rank) {
+		for (int i = 1; i < np; i++) {
+			MPI_Recv(str+displr[i], strlen, MPI_CHAR, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		}
+	}
+	else {
+		MPI_Send(&rec_buf, sendcounts[rank], MPI_CHAR, rank, 0, MPI_COMM_WORLD);
+	}
+*/
 	free(sendcounts);
 	free(displs);
+	free(recvcounts);
+	free(displr);
 //	free(rec_buf);
 }
