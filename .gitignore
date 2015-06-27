@@ -16,4 +16,7 @@ unit_test
 /results/*.aux
 /results/*.log
 
-
+# exe
+reverse_par
+gol_par
+gol_seq
