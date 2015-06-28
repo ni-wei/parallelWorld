@@ -28,6 +28,9 @@ unsigned int gol(unsigned char *grid, unsigned int dim_x, unsigned int dim_y, un
 	int sum = 0;		// Sum of send counts. Used to calculate send displacements
 	//unsigned char rec_buf[100];	// buffer where the received data should be stored
 	unsigned char *rec_buf;		// buffer where the received data should be stored
+	unsigned char *sendBuffer[2];
+	unsigned char *recvBuffer[2];
+
 	sendcounts = malloc(np * sizeof(int)); // or calloc?
 	displs = malloc(np * sizeof(int));
 	sub_dim_x = malloc(np * sizeof(unsigned int));
@@ -47,6 +50,20 @@ unsigned int gol(unsigned char *grid, unsigned int dim_x, unsigned int dim_y, un
 	unsigned int sub_size = sub_dim_x[rank] *dim_y;
 //	int sub_size = sendcounts[rank];
 	rec_buf = calloc(sizeof(unsigned char), sub_size);
+	sendBuffer[0] = calloc(sizeof(unsigned char), dim_y);
+	sendBuffer[1] = calloc(sizeof(unsigned char), dim_y);
+	recvBuffer[0] = calloc(sizeof(unsigned char), dim_y);
+	recvBuffer[1] = calloc(sizeof(unsigned char), dim_y);
+
+	// Set neighbors
+	if (rank == 0)
+		prev = np-1;
+	else
+		prev = rank-1;
+	if (rank == np - 1)
+		next = 0;
+	else
+		next = rank+1;
 
 	// print calculated send counts and displacements for each process
 	if (0 == rank) {
@@ -60,18 +77,6 @@ unsigned int gol(unsigned char *grid, unsigned int dim_x, unsigned int dim_y, un
 	grid_tmp = calloc(sizeof(unsigned char), sub_size);
 	if (grid_tmp == NULL)
 		exit(EXIT_FAILURE);
-	grid_in = rec_buf;
-	grid_out = grid_tmp;
-
-	/* Set neighbors */
-	if (rank == 0)
-		prev = np-1;
-	else
-		prev = rank-1;
-	if (rank == np - 1)
-		next = 0;
-	else
-		next = rank+1;
 /*
 	grid_tmp = calloc(sizeof(unsigned char), dim_y * dim_x);
 	if (grid_tmp == NULL)
@@ -83,12 +88,33 @@ unsigned int gol(unsigned char *grid, unsigned int dim_x, unsigned int dim_y, un
 //if(0 == rank){
 	for (int t = 0; t < time_steps; ++t)
 	{
-		MPI_Sendrecv(rec_buf + dim_y, dim_y, MPI_CHAR, prev, 1,
-			rec_buf, dim_y, MPI_CHAR, prev, 0,
+		for (int i = 0; i < dim_y; ++i)
+		{
+			*(sendBuffer[0] + i) = *(rec_buf + dim_y + i);
+			*(sendBuffer[1] + i)= *(rec_buf + sub_size - 2*dim_y + i);
+		}
+		MPI_Sendrecv(sendBuffer[0], dim_y, MPI_CHAR, prev, 1,
+			recvBuffer[0], dim_y, MPI_CHAR, prev, 0,
 			MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		MPI_Sendrecv(rec_buf + sub_size - 2*dim_y, dim_y, MPI_CHAR, next, 0,
-			rec_buf + sub_size - dim_y, dim_y, MPI_CHAR, next, 1,
+		MPI_Sendrecv(sendBuffer[1], dim_y, MPI_CHAR, next, 0,
+			recvBuffer[1], dim_y, MPI_CHAR, next, 1,
 			MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		/*MPI_Sendrecv(rec_buf + dim_y, dim_y, MPI_CHAR, prev, rank,
+			rec_buf, dim_y, MPI_CHAR, prev, prev,
+			MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Sendrecv(rec_buf + sub_size - 2*dim_y, dim_y, MPI_CHAR, next, rank,
+			rec_buf + sub_size - dim_y, dim_y, MPI_CHAR, next, next,
+			MPI_COMM_WORLD, MPI_STATUS_IGNORE);*/
+		MPI_Barrier(MPI_COMM_WORLD);
+		for (int i = 0; i < dim_y; ++i)
+		{
+			*(rec_buf + i) = *(recvBuffer[0] + i);
+			*(rec_buf + sub_size - dim_y + i) = *(recvBuffer[1] + i);
+		}
+
+		grid_in = rec_buf;
+		grid_out = grid_tmp;
+
 		for (int y = 0; y < dim_y; ++y)
 		{
 			for (int x = 0; x < sub_dim_x[rank]; ++x)
@@ -99,6 +125,8 @@ unsigned int gol(unsigned char *grid, unsigned int dim_x, unsigned int dim_y, un
 		swap((void**)&grid_in, (void**)&grid_out);
 	}
 //}
+
+//	MPI_Barrier(MPI_COMM_WORLD);
 /*
 	if (grid != grid_in)
 		memcpy(grid, grid_in, size);
@@ -106,8 +134,8 @@ unsigned int gol(unsigned char *grid, unsigned int dim_x, unsigned int dim_y, un
 	if (rec_buf != grid_in)
 		memcpy(rec_buf, grid_in, sizeof(unsigned char) * sub_size);
 
-	free(grid_tmp);
-	MPI_Gatherv(rec_buf, sendcounts[rank], MPI_CHAR, grid, sendcounts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
+	//free(grid_tmp);
+	MPI_Gatherv(rec_buf + dim_y, sendcounts[rank], MPI_CHAR, grid, sendcounts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
 
 	return cells_alive(grid, dim_x, dim_y);
 
